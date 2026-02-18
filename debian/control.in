@@ -1,0 +1,22 @@
+Package: com.korboy.python3.14
+Name: Python 3.14 (korboybeats)
+Version: ${PY_VER}-1
+Section: Development
+Priority: optional
+Architecture: iphoneos-arm64
+Maintainer: Korboy <korboybeats@gmail.com>
+Installed-Size: ${INSTALLED_SIZE}
+Description: The Python 3.14 interpreter for iOS.
+ This package provides a full Python 3.14 environment, including:
+ .
+  * The Python 3.14 interpreter (python3.14)
+  * Standard library with SSL support (OpenSSL 3.2)
+  * ctypes FFI for loading dynamic libraries
+  * lzma, bz2, zstd compression modules
+  * curses terminal UI library
+  * dbm/gdbm database modules
+ .
+ Can be installed alongside other Python versions.
+ .
+ Note: pip is NOT installed by default. To install it, run:
+   python3.14 -m ensurepip
