@@ -1,0 +1,92 @@
+name: Build Python 3.14.3 for iOS (arm64) and package .deb
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    timeout-minutes: 45
+    concurrency:
+      group: ios-python3.14-arm64-${{ github.ref }}
+      cancel-in-progress: true
+    env:
+      PY_VER: 3.14.3
+      LIBFFI_VER: 3.4.4
+      OPENSSL_VER: 3.2.3
+      XZ_VER: 5.6.4
+      BZ2_VER: 1.0.8
+      ZSTD_VER: 1.5.6
+      NCURSES_VER: "6.5"
+      GDBM_VER: "1.24"
+      MIN_IOS: "15.0"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Discover SDK version
+        id: sdk
+        run: |
+          echo "version=$(xcrun --sdk iphoneos --show-sdk-version)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore deps cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            work/deps/openssl-ios
+            work/deps/libffi-ios
+            work/deps/xz-ios
+            work/deps/bzip2-ios
+            work/deps/zstd-ios
+            work/deps/ncurses-ios
+            work/deps/gdbm-ios
+          key: ios-${{ runner.os }}-sdk-${{ steps.sdk.outputs.version }}-openssl-${{ env.OPENSSL_VER }}-libffi-${{ env.LIBFFI_VER }}-xz-${{ env.XZ_VER }}-bz2-${{ env.BZ2_VER }}-zstd-${{ env.ZSTD_VER }}-ncurses-${{ env.NCURSES_VER }}-gdbm-${{ env.GDBM_VER }}-hash-${{ hashFiles('scripts/*.sh', '.github/workflows/build.yml') }}
+          restore-keys: |
+            ios-${{ runner.os }}-sdk-${{ steps.sdk.outputs.version }}-openssl-${{ env.OPENSSL_VER }}-libffi-${{ env.LIBFFI_VER }}-xz-${{ env.XZ_VER }}-
+            ios-${{ runner.os }}-sdk-${{ steps.sdk.outputs.version }}-
+
+      - name: Install build tools
+        run: |
+          bash scripts/install-build-tools.sh
+
+      - name: Set up Python 3.14 for host build
+        id: py
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Build dependencies
+        run: |
+          set -euxo pipefail
+          bash scripts/build-openssl.sh
+          bash scripts/build-libffi.sh
+          bash scripts/build-xz.sh
+          bash scripts/build-bzip2.sh
+          bash scripts/build-zstd.sh
+          bash scripts/build-ncurses.sh
+          bash scripts/build-gdbm.sh
+
+      - name: Build Python 3.14 for iOS
+        env:
+          PYTHON_FOR_BUILD: ${{ steps.py.outputs.python-path }}
+        run: |
+          set -euxo pipefail
+          bash scripts/build-python.sh
+
+      - name: Package .deb
+        run: |
+          set -euxo pipefail
+          bash scripts/package-dpkg.sh
+
+      - name: Upload rootful .deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: com.korboy.python314_${{ env.PY_VER }}_iphoneos-arm
+          path: work/com.korboy.python314_${{ env.PY_VER }}_iphoneos-arm.deb
+
+      - name: Upload rootless .deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: com.korboy.python314_${{ env.PY_VER }}_iphoneos-arm64
+          path: work/com.korboy.python314_${{ env.PY_VER }}_iphoneos-arm64.deb

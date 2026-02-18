@@ -1,0 +1,8 @@
+python3.14 (3.14.3) stable; urgency=low
+
+  * Initial release of Python 3.14.3 for iOS arm64.
+  * Built with OpenSSL 3.2.3, libffi 3.4.4, xz 5.6.4, bzip2 1.0.8,
+    zstd 1.5.6, ncurses 6.5, and gdbm 1.24.
+  * Enables lzma, bz2, zstd, curses, dbm, and gdbm modules.
+
+ -- Korboy <korboybeats@gmail.com>  Wed, 19 Feb 2026 00:00:00 +0000
